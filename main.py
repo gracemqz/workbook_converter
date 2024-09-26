@@ -69,7 +69,7 @@ def process_csv_file(file):
     # Determine the maximum number of steps across all languages
     max_steps = df_pcm_generated.groupby("Language").size().max()
 
-    # Build the "Row Names" data
+    # Build the "Row Names" column
     row_names = INITIAL_ROWS + STEP_FIELDS * max_steps
 
     # Create the "Ideal Worksheet" DataFrame with "Route Map" as the header
@@ -78,7 +78,7 @@ def process_csv_file(file):
 
     # Add language columns and populate data
     for lang in unique_languages:
-        # Filter data for the current language
+        # Filter data by the selected language
         lang_df = df_pcm_generated[df_pcm_generated["Language"] == lang].reset_index(
             drop=True
         )
@@ -108,14 +108,13 @@ def process_csv_file(file):
     buffer = BytesIO()
     df_ideal_worksheet.to_csv(buffer, index=False)
     buffer.seek(0)
-    return buffer
+    return buffer, df_ideal_worksheet
 
 
 def main():
     # Set the page configuration
-    st.set_page_config(
-        page_title="Workbook Converter", page_icon="🗂", layout="centered"
-    )
+    st.set_page_config(page_title="Workbook Converter", page_icon="🗂")
+
     # Display the title in SAP blue
     st.markdown(
         '<h1 style="color:#008BBF;">Workbook Converter</h1>',
@@ -127,16 +126,17 @@ def main():
 
     # File uploader
     uploaded_file = st.file_uploader("Upload the workbook:", type="csv")
-    if uploaded_file is not None:
-        if st.button("Process Workbook"):
-            buffer = process_csv_file(uploaded_file)
-            st.download_button(
-                label="Download Processed Workbook",
-                data=buffer,
-                file_name="processed_file.csv",
-                mime="text/csv",
-            )
-            st.success("Workbook processed successfully!")
+    if st.button("Process Workbook", disabled=not uploaded_file):
+        buffer, df_ideal_worksheet = process_csv_file(uploaded_file)
+        st.success("Workbook processed successfully!")
+
+        st.download_button(
+            label="Download Processed Workbook",
+            data=buffer,
+            file_name="processed_file.csv",
+            mime="text/csv",
+        )
+        st.dataframe(df_ideal_worksheet)
 
 
 if __name__ == "__main__":
