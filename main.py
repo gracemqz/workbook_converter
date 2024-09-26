@@ -10,11 +10,8 @@ def process_excel_file(file_path):
     workbook = load_workbook(file_path)
     sheet_names = workbook.sheetnames
 
-    # Check if "Ideal Worksheet" exists, if not create it
-    if "Ideal Worksheet" in sheet_names:
-        sheet_ideal_worksheet = pd.read_excel(file_path, sheet_name="Ideal Worksheet")
-    else:
-        sheet_ideal_worksheet = pd.DataFrame()
+    # Always create a new DataFrame for the "Ideal Worksheet"
+    sheet_ideal_worksheet = pd.DataFrame()
 
     # Read the "PCM Generated" sheet
     sheet_pcm_generated = pd.read_excel(file_path, sheet_name="PCM Generated")
@@ -24,15 +21,10 @@ def process_excel_file(file_path):
         sheet_pcm_generated["Language"] != "Language pack"
     ]
     unique_languages = filtered_languages["Language"].unique()
-    largest_column_index = len(sheet_ideal_worksheet.columns) - 1
-
     for lang in unique_languages:
-        if lang not in sheet_ideal_worksheet.columns:
-            largest_column_index += 1
-            sheet_ideal_worksheet.insert(largest_column_index, lang, "")
+        sheet_ideal_worksheet[lang] = ""
 
     filtered_row_data = sheet_pcm_generated.iloc[1:]
-
     for row_index, row_data in filtered_row_data.iterrows():
         sheet_ideal_worksheet.loc[0, row_data["Language"]] = row_data["Route Map Name"]
         sheet_ideal_worksheet.loc[1, row_data["Language"]] = row_data["Description"]
@@ -107,9 +99,9 @@ def process_excel_file(file_path):
             "Step Exit Reminder Text"
         ]
 
-    # Save the modified DataFrame to the workbook
+    # Save the modified DataFrame to the workbook, overwriting the existing "Ideal Worksheet" sheet
     with pd.ExcelWriter(
-        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+        file_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
     ) as writer:
         sheet_ideal_worksheet.to_excel(
             writer, sheet_name="Ideal Worksheet", index=False
