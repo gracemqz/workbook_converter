@@ -2,139 +2,131 @@ from io import BytesIO
 
 import pandas as pd
 import streamlit as st
-from openpyxl import load_workbook
 
 
-def process_excel_file(file_path):
-    # Load the workbook and get the sheet names
-    workbook = load_workbook(file_path)
-    sheet_names = workbook.sheetnames
+def process_csv_file(file):
+    # Read the CSV file into a DataFrame
+    df_pcm_generated = pd.read_csv(file)
 
-    # Always create a new DataFrame for the "Ideal Worksheet"
-    sheet_ideal_worksheet = pd.DataFrame()
+    # Create a new DataFrame for the "Ideal Worksheet"
+    df_ideal_worksheet = pd.DataFrame()
 
-    # Read the "PCM Generated" sheet
-    sheet_pcm_generated = pd.read_excel(file_path, sheet_name="PCM Generated")
-
-    # Add language columns to the "Ideal Worksheet" sheet
-    filtered_languages = sheet_pcm_generated[
-        sheet_pcm_generated["Language"] != "Language pack"
+    # Add language columns to the "Ideal Worksheet" DataFrame
+    filtered_languages = df_pcm_generated[
+        df_pcm_generated["Language"] != "Language pack"
     ]
     unique_languages = filtered_languages["Language"].unique()
     for lang in unique_languages:
-        sheet_ideal_worksheet[lang] = ""
+        df_ideal_worksheet[lang] = ""
 
-    filtered_row_data = sheet_pcm_generated.iloc[1:]
+    filtered_row_data = df_pcm_generated.iloc[1:]
     for row_index, row_data in filtered_row_data.iterrows():
-        sheet_ideal_worksheet.loc[0, row_data["Language"]] = row_data["Route Map Name"]
-        sheet_ideal_worksheet.loc[1, row_data["Language"]] = row_data["Description"]
         index_offset = 23 * (row_index % 4)
-        sheet_ideal_worksheet.loc[2 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[0, row_data["Language"]] = row_data["Route Map Name"]
+        df_ideal_worksheet.loc[1, row_data["Language"]] = row_data["Description"]
+        df_ideal_worksheet.loc[2 + index_offset, row_data["Language"]] = row_data[
             "Step Name"
         ]
-        sheet_ideal_worksheet.loc[4 + index_offset, row_data["Language"]] = row_data[
-            "Step Name"
-        ]
-        sheet_ideal_worksheet.loc[3 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[3 + index_offset, row_data["Language"]] = row_data[
             "Modify Stage"
         ]
-        sheet_ideal_worksheet.loc[5 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[4 + index_offset, row_data["Language"]] = row_data[
+            "Step Name"
+        ]
+        df_ideal_worksheet.loc[5 + index_offset, row_data["Language"]] = row_data[
             "Step Description"
         ]
-        sheet_ideal_worksheet.loc[6 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[6 + index_offset, row_data["Language"]] = row_data[
             "Step Type"
         ]
-        sheet_ideal_worksheet.loc[7 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[7 + index_offset, row_data["Language"]] = row_data[
             "Roles"
         ]
-        sheet_ideal_worksheet.loc[8 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[8 + index_offset, row_data["Language"]] = row_data[
             "Step Introduction and Mouseover"
         ]
-        sheet_ideal_worksheet.loc[9 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[9 + index_offset, row_data["Language"]] = row_data[
             "Step Name After Completion"
         ]
-        sheet_ideal_worksheet.loc[10 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[10 + index_offset, row_data["Language"]] = row_data[
             "Step Mode"
         ]
-        sheet_ideal_worksheet.loc[11 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[11 + index_offset, row_data["Language"]] = row_data[
             "Exit Button Text"
         ]
-        sheet_ideal_worksheet.loc[12 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[12 + index_offset, row_data["Language"]] = row_data[
             "Step Exit Text"
         ]
-        sheet_ideal_worksheet.loc[13 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[13 + index_offset, row_data["Language"]] = row_data[
             "Previous Step Exit Button Text"
         ]
-        sheet_ideal_worksheet.loc[14 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[14 + index_offset, row_data["Language"]] = row_data[
             "Previous Step Exit Text"
         ]
-        sheet_ideal_worksheet.loc[15 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[15 + index_offset, row_data["Language"]] = row_data[
             "Entry User"
         ]
-        sheet_ideal_worksheet.loc[16 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[16 + index_offset, row_data["Language"]] = row_data[
             "Exit User"
         ]
-        sheet_ideal_worksheet.loc[17 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[17 + index_offset, row_data["Language"]] = row_data[
             "Start Date"
         ]
-        sheet_ideal_worksheet.loc[18 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[18 + index_offset, row_data["Language"]] = row_data[
             "Exit Date"
         ]
-        sheet_ideal_worksheet.loc[19 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[19 + index_offset, row_data["Language"]] = row_data[
             "Enforce Start Date"
         ]
-        sheet_ideal_worksheet.loc[20 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[20 + index_offset, row_data["Language"]] = row_data[
             "Automatic send on due date"
         ]
-        sheet_ideal_worksheet.loc[21 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[21 + index_offset, row_data["Language"]] = row_data[
             "Iterative Button Text"
         ]
-        sheet_ideal_worksheet.loc[22 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[22 + index_offset, row_data["Language"]] = row_data[
             "Reject Button Mouseover Text"
         ]
-        sheet_ideal_worksheet.loc[23 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[23 + index_offset, row_data["Language"]] = row_data[
             "Step Exit Reminder"
         ]
-        sheet_ideal_worksheet.loc[24 + index_offset, row_data["Language"]] = row_data[
+        df_ideal_worksheet.loc[24 + index_offset, row_data["Language"]] = row_data[
             "Step Exit Reminder Text"
         ]
 
-    # Save the modified DataFrame to the workbook, overwriting the existing "Ideal Worksheet" sheet
-    with pd.ExcelWriter(
-        file_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
-    ) as writer:
-        sheet_ideal_worksheet.to_excel(
-            writer, sheet_name="Ideal Worksheet", index=False
-        )
-
-    # Reload the modified workbook
-    workbook = load_workbook(file_path)
-
-    # Load the modified workbook into a BytesIO buffer
+    # Save the modified DataFrame to a CSV file in memory
     buffer = BytesIO()
-    workbook.save(buffer)
+    df_ideal_worksheet.to_csv(buffer, index=False)
     buffer.seek(0)
     return buffer
 
 
 def main():
-    st.title("Excel Processing App")
+    # Set the page configuration
+    st.set_page_config(
+        page_title="Workbook Converter", page_icon="🗂", layout="centered"
+    )
+    # Display the title in SAP blue
+    st.markdown(
+        '<h1 style="color:#008BBF;">Workbook Converter</h1>',
+        unsafe_allow_html=True,
+    )
 
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    # Add the dropdown selector for Object Type
+    object_type = st.selectbox("Select the object type:", ["Route map"])
+
+    # File uploader
+    uploaded_file = st.file_uploader("Upload the workbook:", type="csv")
     if uploaded_file is not None:
-        file_path = uploaded_file.name
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-        if st.button("Process File"):
-            buffer = process_excel_file(file_path)
+        if st.button("Process Workbook"):
+            buffer = process_csv_file(uploaded_file)
             st.download_button(
-                label="Download Processed File",
+                label="Download Processed Workbook",
                 data=buffer,
-                file_name="processed_file.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                file_name="processed_file.csv",
+                mime="text/csv",
             )
-            st.success("File processed successfully!")
+            st.success("Workbook processed successfully!")
 
 
 if __name__ == "__main__":
