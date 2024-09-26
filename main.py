@@ -2,14 +2,16 @@ from io import BytesIO
 
 import pandas as pd
 import streamlit as st
+from openpyxl import load_workbook
 
 
 def process_excel_file(file_path):
-    # Read the Excel file with all sheets
-    xls = pd.ExcelFile(file_path)
+    # Load the workbook and get the sheet names
+    workbook = load_workbook(file_path)
+    sheet_names = workbook.sheetnames
 
     # Check if "Ideal Worksheet" exists, if not create it
-    if "Ideal Worksheet" in xls.sheet_names:
+    if "Ideal Worksheet" in sheet_names:
         sheet_ideal_worksheet = pd.read_excel(file_path, sheet_name="Ideal Worksheet")
     else:
         sheet_ideal_worksheet = pd.DataFrame()
@@ -105,17 +107,20 @@ def process_excel_file(file_path):
             "Step Exit Reminder Text"
         ]
 
-    # Save the modified DataFrame to a BytesIO buffer with all sheets
-    buffer = BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        for sheet_name in xls.sheet_names:
-            pd.read_excel(file_path, sheet_name=sheet_name).to_excel(
-                writer, sheet_name=sheet_name, index=False
-            )
-        # Ensure "Ideal Worksheet" is always included
+    # Save the modified DataFrame to the workbook
+    with pd.ExcelWriter(
+        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+    ) as writer:
         sheet_ideal_worksheet.to_excel(
             writer, sheet_name="Ideal Worksheet", index=False
         )
+
+    # Reload the modified workbook
+    workbook = load_workbook(file_path)
+
+    # Load the modified workbook into a BytesIO buffer
+    buffer = BytesIO()
+    workbook.save(buffer)
     buffer.seek(0)
     return buffer
 
