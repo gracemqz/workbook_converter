@@ -1,5 +1,7 @@
-import streamlit as st
+from io import BytesIO
+
 import pandas as pd
+import streamlit as st
 
 
 def process_excel_file(file_path):
@@ -19,13 +21,6 @@ def process_excel_file(file_path):
         if lang not in sheet_ideal_worksheet.columns:
             largest_column_index += 1
             sheet_ideal_worksheet.insert(largest_column_index, lang, "")
-
-    with pd.ExcelWriter(
-        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
-    ) as writer:
-        sheet_ideal_worksheet.to_excel(
-            writer, sheet_name="Ideal Worksheet", index=False
-        )
 
     filtered_row_data = sheet_pcm_generated.iloc[1:]
 
@@ -103,12 +98,14 @@ def process_excel_file(file_path):
             "Step Exit Reminder Text"
         ]
 
-    with pd.ExcelWriter(
-        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
-    ) as writer:
+    # Save the modified DataFrame to a BytesIO buffer
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
         sheet_ideal_worksheet.to_excel(
             writer, sheet_name="Ideal Worksheet", index=False
         )
+    buffer.seek(0)
+    return buffer
 
 
 def main():
@@ -121,7 +118,13 @@ def main():
             f.write(uploaded_file.getbuffer())
 
         if st.button("Process File"):
-            process_excel_file(file_path)
+            buffer = process_excel_file(file_path)
+            st.download_button(
+                label="Download Processed File",
+                data=buffer,
+                file_name="processed_file.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
             st.success("File processed successfully!")
 
 
