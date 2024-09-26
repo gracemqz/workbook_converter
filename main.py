@@ -1,65 +1,129 @@
-import time
-from io import BytesIO
-
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-# Set page configuration
-st.set_page_config(page_title="Workbook Converter", page_icon="🗂", layout="centered")
 
-# Inject custom CSS for the title color (SAP Blue)
-st.markdown(
-    """
-    <style>
-    .title {
-        color: #0a6ed1;
-        font-size: 36px;
-        font-weight: bold;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+def process_excel_file(file_path):
+    # Read the "PCM Generated" sheet
+    sheet_pcm_generated = pd.read_excel(file_path, sheet_name="PCM Generated")
+    # Read the "Ideal Worksheet" sheet
+    sheet_ideal_worksheet = pd.read_excel(file_path, sheet_name="Ideal Worksheet")
 
-# App title with custom class for styling
-st.markdown('<h1 class="title">Workbook Converter</h1>', unsafe_allow_html=True)
+    # Add language columns to the "Ideal Worksheet" sheet
+    filtered_languages = sheet_pcm_generated[
+        sheet_pcm_generated["Language"] != "Language pack"
+    ]
+    unique_languages = filtered_languages["Language"].unique()
+    largest_column_index = len(sheet_ideal_worksheet.columns) - 1
 
-# 1. Dropdown selector with one option "Route Map"
-object_type = st.selectbox("Select the Object Type:", options=["Route Map"], index=0)
+    for lang in unique_languages:
+        if lang not in sheet_ideal_worksheet.columns:
+            largest_column_index += 1
+            sheet_ideal_worksheet.insert(largest_column_index, lang, "")
 
-# 2. File uploader for Excel files
-uploaded_file = st.file_uploader("Upload Your Excel File:", type=["xlsx"])
+    with pd.ExcelWriter(
+        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+    ) as writer:
+        sheet_ideal_worksheet.to_excel(
+            writer, sheet_name="Ideal Worksheet", index=False
+        )
 
-# Placeholder for the converted file
-converted_file = None
+    filtered_row_data = sheet_pcm_generated.iloc[1:]
 
-# 3. Convert button
-if st.button("Convert"):
+    for row_index, row_data in filtered_row_data.iterrows():
+        sheet_ideal_worksheet.loc[0, row_data["Language"]] = row_data["Route Map Name"]
+        sheet_ideal_worksheet.loc[1, row_data["Language"]] = row_data["Description"]
+        index_offset = 23 * (row_index % 4)
+        sheet_ideal_worksheet.loc[2 + index_offset, row_data["Language"]] = row_data[
+            "Step Name"
+        ]
+        sheet_ideal_worksheet.loc[4 + index_offset, row_data["Language"]] = row_data[
+            "Step Name"
+        ]
+        sheet_ideal_worksheet.loc[3 + index_offset, row_data["Language"]] = row_data[
+            "Modify Stage"
+        ]
+        sheet_ideal_worksheet.loc[5 + index_offset, row_data["Language"]] = row_data[
+            "Step Description"
+        ]
+        sheet_ideal_worksheet.loc[6 + index_offset, row_data["Language"]] = row_data[
+            "Step Type"
+        ]
+        sheet_ideal_worksheet.loc[7 + index_offset, row_data["Language"]] = row_data[
+            "Roles"
+        ]
+        sheet_ideal_worksheet.loc[8 + index_offset, row_data["Language"]] = row_data[
+            "Step Introduction and Mouseover"
+        ]
+        sheet_ideal_worksheet.loc[9 + index_offset, row_data["Language"]] = row_data[
+            "Step Name After Completion"
+        ]
+        sheet_ideal_worksheet.loc[10 + index_offset, row_data["Language"]] = row_data[
+            "Step Mode"
+        ]
+        sheet_ideal_worksheet.loc[11 + index_offset, row_data["Language"]] = row_data[
+            "Exit Button Text"
+        ]
+        sheet_ideal_worksheet.loc[12 + index_offset, row_data["Language"]] = row_data[
+            "Step Exit Text"
+        ]
+        sheet_ideal_worksheet.loc[13 + index_offset, row_data["Language"]] = row_data[
+            "Previous Step Exit Button Text"
+        ]
+        sheet_ideal_worksheet.loc[14 + index_offset, row_data["Language"]] = row_data[
+            "Previous Step Exit Text"
+        ]
+        sheet_ideal_worksheet.loc[15 + index_offset, row_data["Language"]] = row_data[
+            "Entry User"
+        ]
+        sheet_ideal_worksheet.loc[16 + index_offset, row_data["Language"]] = row_data[
+            "Exit User"
+        ]
+        sheet_ideal_worksheet.loc[17 + index_offset, row_data["Language"]] = row_data[
+            "Start Date"
+        ]
+        sheet_ideal_worksheet.loc[18 + index_offset, row_data["Language"]] = row_data[
+            "Exit Date"
+        ]
+        sheet_ideal_worksheet.loc[19 + index_offset, row_data["Language"]] = row_data[
+            "Enforce Start Date"
+        ]
+        sheet_ideal_worksheet.loc[20 + index_offset, row_data["Language"]] = row_data[
+            "Automatic send on due date"
+        ]
+        sheet_ideal_worksheet.loc[21 + index_offset, row_data["Language"]] = row_data[
+            "Iterative Button Text"
+        ]
+        sheet_ideal_worksheet.loc[22 + index_offset, row_data["Language"]] = row_data[
+            "Reject Button Mouseover Text"
+        ]
+        sheet_ideal_worksheet.loc[23 + index_offset, row_data["Language"]] = row_data[
+            "Step Exit Reminder"
+        ]
+        sheet_ideal_worksheet.loc[24 + index_offset, row_data["Language"]] = row_data[
+            "Step Exit Reminder Text"
+        ]
+
+    with pd.ExcelWriter(
+        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
+    ) as writer:
+        sheet_ideal_worksheet.to_excel(
+            writer, sheet_name="Ideal Worksheet", index=False
+        )
+
+
+def main():
+    st.title("Excel Processing App")
+
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
-        with st.spinner("Converting..."):
-            # Simulate file conversion
-            time.sleep(2)  # Replace with actual processing logic
+        file_path = uploaded_file.name
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-            # For demonstration, we read and write the same file
-            df = pd.read_excel(uploaded_file)
+        if st.button("Process File"):
+            process_excel_file(file_path)
+            st.success("File processed successfully!")
 
-            # Save to a BytesIO object
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(writer, index=False)
-            processed_data = output.getvalue()
 
-            # Indicate that conversion is complete
-            st.success("Conversion complete!")
-            converted_file = True
-    else:
-        st.error("Please upload an Excel file before conversion.")
-
-# 4. Download button for the converted file
-if converted_file:
-    st.download_button(
-        label="Download Converted File",
-        data=processed_data,
-        file_name="converted_file.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
+if __name__ == "__main__":
+    main()
