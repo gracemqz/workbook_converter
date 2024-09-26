@@ -5,10 +5,17 @@ import streamlit as st
 
 
 def process_excel_file(file_path):
+    # Read the Excel file with all sheets
+    xls = pd.ExcelFile(file_path)
+
+    # Check if "Ideal Worksheet" exists, if not create it
+    if "Ideal Worksheet" in xls.sheet_names:
+        sheet_ideal_worksheet = pd.read_excel(file_path, sheet_name="Ideal Worksheet")
+    else:
+        sheet_ideal_worksheet = pd.DataFrame()
+
     # Read the "PCM Generated" sheet
     sheet_pcm_generated = pd.read_excel(file_path, sheet_name="PCM Generated")
-    # Read the "Ideal Worksheet" sheet
-    sheet_ideal_worksheet = pd.read_excel(file_path, sheet_name="Ideal Worksheet")
 
     # Add language columns to the "Ideal Worksheet" sheet
     filtered_languages = sheet_pcm_generated[
@@ -98,9 +105,14 @@ def process_excel_file(file_path):
             "Step Exit Reminder Text"
         ]
 
-    # Save the modified DataFrame to a BytesIO buffer
+    # Save the modified DataFrame to a BytesIO buffer with all sheets
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        for sheet_name in xls.sheet_names:
+            pd.read_excel(file_path, sheet_name=sheet_name).to_excel(
+                writer, sheet_name=sheet_name, index=False
+            )
+        # Ensure "Ideal Worksheet" is always included
         sheet_ideal_worksheet.to_excel(
             writer, sheet_name="Ideal Worksheet", index=False
         )
