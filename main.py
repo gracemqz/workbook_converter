@@ -3,6 +3,60 @@ from io import BytesIO
 import pandas as pd
 import streamlit as st
 
+# Constants
+INITIAL_ROWS = ["Route Map Name", "Route Map Description"]
+STEP_FIELDS = [
+    "Step Name",
+    "Step Stage",
+    "Step Name",
+    "Step Description",
+    "Step Type",
+    "Type (Role)",
+    "Step Introduction & Mouseover text",
+    "Step Name After Completion",
+    "Step Mode",
+    "Exit Button Text",
+    "Step Exit Text (next to Exit button)",
+    "Previous Step Exit Button Text (Modify Stage Only)",
+    "Previous Step Exit Text (Modify Stage Only)",
+    "Entry User",
+    "Exit User",
+    "Start Date",
+    "Exit Date",
+    "Enforce Start Date",
+    "Automatic send on due date",
+    "Iterative Button Text (Iterative Step Type Only)",
+    "Reject Button Mouseover Text (Signature Stage Only)",
+    "Step Exit Reminder (Modify and Signature Only)",
+    "Step Exit Reminder Text (Modify and Signature Only)",
+]
+FIELD_MAPPING = {
+    "Route Map Name": "Route Map Name",
+    "Route Map Description": "Description",
+    "Step Name": "Step Name",
+    "Step Stage": "Modify Stage",
+    "Step Description": "Step Description",
+    "Step Type": "Step Type",
+    "Type (Role)": "Roles",
+    "Step Introduction & Mouseover text": "Step Introduction and Mouseover",
+    "Step Name After Completion": "Step Name After Completion",
+    "Step Mode": "Step Mode",
+    "Exit Button Text": "Exit Button Text",
+    "Step Exit Text (next to Exit button)": "Step Exit Text",
+    "Previous Step Exit Button Text (Modify Stage Only)": "Previous Step Exit Button Text",
+    "Previous Step Exit Text (Modify Stage Only)": "Previous Step Exit Text",
+    "Entry User": "Entry User",
+    "Exit User": "Exit User",
+    "Start Date": "Start Date",
+    "Exit Date": "Exit Date",
+    "Enforce Start Date": "Enforce Start Date",
+    "Automatic send on due date": "Automatic send on due date",
+    "Iterative Button Text (Iterative Step Type Only)": "Iterative Button Text",
+    "Reject Button Mouseover Text (Signature Stage Only)": "Reject Button Mouseover Text",
+    "Step Exit Reminder (Modify and Signature Only)": "Step Exit Reminder",
+    "Step Exit Reminder Text (Modify and Signature Only)": "Step Exit Reminder Text",
+}
+
 
 def process_csv_file(file):
     # Read the CSV file into a DataFrame
@@ -12,72 +66,15 @@ def process_csv_file(file):
     df_pcm_generated = df_pcm_generated[df_pcm_generated["Language"] != "Language pack"]
     unique_languages = df_pcm_generated["Language"].unique()
 
-    # Define the initial rows and the step fields
-    # Removed "Route Map" from initial_rows and will set it as the header
-    initial_rows = ["Route Map Name", "Route Map Description"]
-    step_fields = [
-        "Step Name",
-        "Step Stage",
-        "Step Name",
-        "Step Description",
-        "Step Type",
-        "Type (Role)",
-        "Step Introduction & Mouseover text",
-        "Step Name After Completion",
-        "Step Mode",
-        "Exit Button Text",
-        "Step Exit Text (next to Exit button)",
-        "Previous Step Exit Button Text (Modify Stage Only)",
-        "Previous Step Exit Text (Modify Stage Only)",
-        "Entry User",
-        "Exit User",
-        "Start Date",
-        "Exit Date",
-        "Enforce Start Date",
-        "Automatic send on due date",
-        "Iterative Button Text (Iterative Step Type Only)",
-        "Reject Button Mouseover Text (Signature Stage Only)",
-        "Step Exit Reminder (Modify and Signature Only)",
-        "Step Exit Reminder Text (Modify and Signature Only)",
-    ]
-
     # Determine the maximum number of steps across all languages
     max_steps = df_pcm_generated.groupby("Language").size().max()
 
-    # Build the "Row Names" data without "Route Map"
-    row_names = initial_rows + step_fields * max_steps
+    # Build the "Row Names" data
+    row_names = INITIAL_ROWS + STEP_FIELDS * max_steps
 
     # Create the "Ideal Worksheet" DataFrame with "Route Map" as the header
     df_ideal_worksheet = pd.DataFrame()
     df_ideal_worksheet["Route Map"] = row_names  # First column header is "Route Map"
-
-    # Define the mapping from "Row Names" to "PCM Generated" columns
-    field_mapping = {
-        "Route Map Name": "Route Map Name",
-        "Route Map Description": "Description",
-        "Step Name": "Step Name",
-        "Step Stage": "Modify Stage",
-        "Step Description": "Step Description",
-        "Step Type": "Step Type",
-        "Type (Role)": "Roles",
-        "Step Introduction & Mouseover text": "Step Introduction and Mouseover",
-        "Step Name After Completion": "Step Name After Completion",
-        "Step Mode": "Step Mode",
-        "Exit Button Text": "Exit Button Text",
-        "Step Exit Text (next to Exit button)": "Step Exit Text",
-        "Previous Step Exit Button Text (Modify Stage Only)": "Previous Step Exit Button Text",
-        "Previous Step Exit Text (Modify Stage Only)": "Previous Step Exit Text",
-        "Entry User": "Entry User",
-        "Exit User": "Exit User",
-        "Start Date": "Start Date",
-        "Exit Date": "Exit Date",
-        "Enforce Start Date": "Enforce Start Date",
-        "Automatic send on due date": "Automatic send on due date",
-        "Iterative Button Text (Iterative Step Type Only)": "Iterative Button Text",
-        "Reject Button Mouseover Text (Signature Stage Only)": "Reject Button Mouseover Text",
-        "Step Exit Reminder (Modify and Signature Only)": "Step Exit Reminder",
-        "Step Exit Reminder Text (Modify and Signature Only)": "Step Exit Reminder Text",
-    }
 
     # Add language columns and populate data
     for lang in unique_languages:
@@ -100,11 +97,10 @@ def process_csv_file(file):
 
         # Populate the step fields
         for step_index in range(num_steps):
-            start_row = len(initial_rows) + step_index * len(step_fields)
+            start_row = len(INITIAL_ROWS) + step_index * len(STEP_FIELDS)
             row_data = lang_df.loc[step_index]
-
-            for i, row_name in enumerate(step_fields):
-                mapped_field = field_mapping.get(row_name, "")
+            for i, row_name in enumerate(STEP_FIELDS):
+                mapped_field = FIELD_MAPPING.get(row_name, "")
                 value = row_data.get(mapped_field, "")
                 df_ideal_worksheet.loc[start_row + i, lang] = value
 
@@ -126,7 +122,7 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # Add the dropdown selector for Object Type
+    # Add the dropdown selector for object type
     object_type = st.selectbox("Select the object type:", ["Route map"])
 
     # File uploader
