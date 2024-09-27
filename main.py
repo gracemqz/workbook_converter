@@ -7,16 +7,16 @@ import streamlit as st
 INITIAL_ROWS = ["Route Map Name", "Route Map Description"]
 STEP_FIELDS = [
     "Step Name",
-    "Step Stage",
-    "Step Name",
+    "Stage Name",
+    "Step Number",
     "Step Description",
     "Step Type",
     "Type (Role)",
-    "Step Introduction & Mouseover text",
+    "Step Introduction & Mouseover Text",
     "Step Name After Completion",
     "Step Mode",
     "Exit Button Text",
-    "Step Exit Text (next to Exit button)",
+    "Step Exit Text (Next to Exit Button)",
     "Previous Step Exit Button Text (Modify Stage Only)",
     "Previous Step Exit Text (Modify Stage Only)",
     "Entry User",
@@ -24,7 +24,7 @@ STEP_FIELDS = [
     "Start Date",
     "Exit Date",
     "Enforce Start Date",
-    "Automatic send on due date",
+    "Automatic Send on Due Date",
     "Iterative Button Text (Iterative Step Type Only)",
     "Reject Button Mouseover Text (Signature Stage Only)",
     "Step Exit Reminder (Modify and Signature Only)",
@@ -34,15 +34,14 @@ FIELD_MAPPING = {
     "Route Map Name": "Route Map Name",
     "Route Map Description": "Description",
     "Step Name": "Step Name",
-    "Step Stage": "Modify Stage",
     "Step Description": "Step Description",
     "Step Type": "Step Type",
     "Type (Role)": "Roles",
-    "Step Introduction & Mouseover text": "Step Introduction and Mouseover",
+    "Step Introduction & Mouseover Text": "Step Introduction and Mouseover",
     "Step Name After Completion": "Step Name After Completion",
     "Step Mode": "Step Mode",
     "Exit Button Text": "Exit Button Text",
-    "Step Exit Text (next to Exit button)": "Step Exit Text",
+    "Step Exit Text (Next to Exit Button)": "Step Exit Text",
     "Previous Step Exit Button Text (Modify Stage Only)": "Previous Step Exit Button Text",
     "Previous Step Exit Text (Modify Stage Only)": "Previous Step Exit Text",
     "Entry User": "Entry User",
@@ -50,7 +49,7 @@ FIELD_MAPPING = {
     "Start Date": "Start Date",
     "Exit Date": "Exit Date",
     "Enforce Start Date": "Enforce Start Date",
-    "Automatic send on due date": "Automatic send on due date",
+    "Automatic Send on Due Date": "Automatic send on due date",
     "Iterative Button Text (Iterative Step Type Only)": "Iterative Button Text",
     "Reject Button Mouseover Text (Signature Stage Only)": "Reject Button Mouseover Text",
     "Step Exit Reminder (Modify and Signature Only)": "Step Exit Reminder",
@@ -99,9 +98,34 @@ def process_csv_file(file):
         for step_index in range(num_steps):
             start_row = len(INITIAL_ROWS) + step_index * len(STEP_FIELDS)
             row_data = lang_df.loc[step_index]
+
+            # Determine Stage Name and Step Number
+            stages = [
+                "Modify Stage",
+                "Evaluation Stage",
+                "Signature Stage",
+                "Completion Stage",
+            ]
+            stage_name = ""
+            step_number = ""
+            for stage in stages:
+                step_num = row_data.get(stage, "")
+                if pd.notnull(step_num) and step_num != "":
+                    stage_name = stage
+                    step_number = step_num
+                    break  # Assuming only one stage will have a value per step
+
             for i, row_name in enumerate(STEP_FIELDS):
                 mapped_field = FIELD_MAPPING.get(row_name, "")
-                value = row_data.get(mapped_field, "")
+                if row_name == "Stage Name":
+                    value = stage_name
+                elif row_name == "Step Number":
+                    value = step_number
+                else:
+                    if mapped_field:
+                        value = row_data.get(mapped_field, "")
+                    else:
+                        value = ""
                 df_ideal_worksheet.loc[start_row + i, lang] = value
 
     # Save the modified DataFrame to a CSV file in memory
