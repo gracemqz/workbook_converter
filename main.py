@@ -6,8 +6,8 @@ import streamlit as st
 # Constants
 INITIAL_ROWS = ["Route Map Name", "Route Map Description"]
 STEP_FIELDS = [
-    "Step Name",
     "Stage Name",
+    "Step Name",
     "Step Number",
     "Step Description",
     "Step Type",
@@ -33,6 +33,7 @@ STEP_FIELDS = [
 FIELD_MAPPING = {
     "Route Map Name": "Route Map Name",
     "Route Map Description": "Description",
+    "Stage Name": "Stage Name",
     "Step Name": "Step Name",
     "Step Description": "Step Description",
     "Step Type": "Step Type",
